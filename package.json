@@ -30,7 +30,7 @@
     "@emotion/styled": "^11.14.1",
     "@mui/icons-material": "^7.3.6",
     "@mui/material": "^7.3.6",
-    "@mui/material-nextjs": "^7.3.10",
+    "@mui/material-nextjs": "^9.5.0",
     "@mui/x-data-grid": "^8.22.1",
     "bcryptjs": "3.0.3",
     "cloudinary": "2.11.0",

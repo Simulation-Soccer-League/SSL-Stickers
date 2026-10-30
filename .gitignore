@@ -1,0 +1,24 @@
+# Dependencies and build output
+/node_modules/
+/.next/
+/out/
+next-env.d.ts
+*.tsbuildinfo
+
+# Environment files (secrets). .env.example lists every variable with placeholders.
+/.env*
+!/.env.example
+
+# Logs
+npm-debug.log*
+*.log
+
+# Local migration baseline (database dumps with test data, captured Rails responses)
+/.baseline/
+
+# OS and editor files
+.DS_Store
+.idea/
+.vscode/*
+!.vscode/extensions.json
+MIGRATION_PLAN.md

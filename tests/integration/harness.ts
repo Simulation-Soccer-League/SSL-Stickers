@@ -37,9 +37,15 @@ export type ForumSeed = {
   username: string;
   password: string;
   usergroup?: number;
-  algorithm?: "" | "bcrypt" | string;
-  encryption?: number;
+  // How the stored hash is generated (default: MyBB salted MD5).
+  hashFormat?: "md5" | "bcrypt" | "argon2";
 };
+
+function forumHash(user: ForumSeed, salt: string): string {
+  if (user.hashFormat === "bcrypt") return bcrypt.hashSync(user.password, 4);
+  if (user.hashFormat === "argon2") return "$argon2id$v=19$m=65536,t=4,p=1$c2FsdA$aGFzaA";
+  return md5(md5(salt) + md5(user.password));
+}
 
 export async function resetDatabase(forumUsers: ForumSeed[]) {
   for (const table of ["trade_items", "trade_participants", "trades", "user_cards", "users", "original_cards"]) {
@@ -52,19 +58,18 @@ export async function resetDatabase(forumUsers: ForumSeed[]) {
        username VARCHAR(120) CHARACTER SET utf8mb3 COLLATE utf8mb3_general_ci NOT NULL UNIQUE,
        password VARCHAR(500) NOT NULL DEFAULT '',
        salt VARCHAR(10) NOT NULL DEFAULT '',
-       usergroup SMALLINT UNSIGNED NOT NULL DEFAULT 2,
-       password_algorithm VARCHAR(30) NOT NULL DEFAULT '',
-       password_encryption SMALLINT NOT NULL DEFAULT 0
+       usergroup SMALLINT UNSIGNED NOT NULL DEFAULT 2
      )`,
   );
   for (const user of forumUsers) {
     const salt = "s4lt" + user.uid;
-    const hash =
-      user.algorithm === "bcrypt" ? bcrypt.hashSync(user.password, 4) : md5(md5(salt) + md5(user.password));
-    await db.execute(
-      "INSERT INTO mybb_users (uid, username, password, salt, usergroup, password_algorithm, password_encryption) VALUES (?, ?, ?, ?, ?, ?, ?)",
-      [user.uid, user.username, hash, salt, user.usergroup ?? 2, user.algorithm ?? "", user.encryption ?? 0],
-    );
+    await db.execute("INSERT INTO mybb_users (uid, username, password, salt, usergroup) VALUES (?, ?, ?, ?, ?)", [
+      user.uid,
+      user.username,
+      forumHash(user, salt),
+      salt,
+      user.usergroup ?? 2,
+    ]);
   }
 }
 

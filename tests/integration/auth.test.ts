@@ -2,14 +2,14 @@ import { after, before, test } from "node:test";
 import assert from "node:assert/strict";
 import { SignJWT } from "jose";
 import type { RowDataPacket } from "mysql2/promise";
-import { Client, PACK_GRANT_TOKEN, SESSION_SECRET, db, resetDatabase, startServer, stopServer } from "./harness.ts";
+import { Client, PACK_GRANT_TOKEN, SESSION_SECRET, db, resetDatabase, startServer, stopServer, type ForumSeed } from "./harness.ts";
 
-const forumUsers = [
+const forumUsers: ForumSeed[] = [
   { uid: 101, username: "Alice", password: "alice-pw" },
-  { uid: 102, username: "Bob", password: "bob-pw", algorithm: "bcrypt" },
+  { uid: 102, username: "Bob", password: "bob-pw", hashFormat: "bcrypt" },
   { uid: 103, username: "Banned", password: "pw", usergroup: 7 },
   { uid: 104, username: "Pending", password: "pw", usergroup: 5 },
-  { uid: 105, username: "Argon", password: "pw", algorithm: "argon2" },
+  { uid: 105, username: "Argon", password: "pw", hashFormat: "argon2" },
   { uid: 106, username: "Legacy", password: "legacy-pw" },
   { uid: 107, username: "RenamedNow", password: "renamed-pw" },
   { uid: 108, username: "Locked", password: "locked-pw" },

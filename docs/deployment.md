@@ -62,16 +62,16 @@ SHOW TABLES LIKE '%users';
 
 Set `MYBB_USERS_TABLE` accordingly.
 
-**Password formats.** The app verifies MyBB salted MD5 (`password_algorithm` empty or `mybb`) and bcrypt (`bcrypt`, or `$2a$`/`$2b$`/`$2y$` hashes). Everything else is refused at login and logged as "unsupported".
+**Password formats.** The app detects the format from the stored hash: MyBB salted MD5 (32 hex characters) and bcrypt (`$2a$`/`$2b$`/`$2y$`). Everything else is refused at login and logged as "unsupported".
 
 ```sql
-SELECT password_algorithm, password_encryption, LEFT(password, 4) AS prefix, COUNT(*) AS users
+SELECT LEFT(password, 4) AS prefix, LENGTH(password) AS length, COUNT(*) AS users
   FROM <prefix>users
- GROUP BY 1, 2, 3
+ GROUP BY 1, 2
  ORDER BY users DESC;
 ```
 
-If any rows are not covered (for example `argon2`, `$2x$`, or `password_encryption <> 0`), extend `src/server/auth/mybbPassword.ts` before launch.
+If any rows are not covered (for example `$argon2`, `$2x$`, or anything that isn't 32 hex characters or `$2a$`/`$2b$`/`$2y$`), extend `src/server/auth/mybbPassword.ts` before launch.
 
 **Blocked user groups.** The app refuses usergroup 5 (awaiting activation) and 7 (banned), the MyBB defaults. Confirm them, and edit `BLOCKED_USERGROUPS` in `src/server/auth/forumUsers.ts` if the SSL forum differs:
 

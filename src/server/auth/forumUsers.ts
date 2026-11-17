@@ -26,7 +26,7 @@ export function blockedReason(user: Pick<ForumUser, "usergroup">): string | null
 // Matches by the forum column's collation, as the Rails login did.
 export async function findForumLogin(username: string): Promise<ForumLoginRow | null> {
   const rows = await query<ForumLoginRow>(
-    `SELECT uid, username, usergroup, password, salt, password_algorithm, password_encryption
+    `SELECT uid, username, usergroup, password, salt
        FROM ${forumUsersTable()} WHERE username = ? LIMIT 2`,
     [username],
     forumPool(),

@@ -13,8 +13,6 @@ function legacyUser(plaintext: string, overrides: Partial<MybbPasswordFields> = 
   return {
     password: md5(md5(salt) + md5(plaintext)),
     salt,
-    password_algorithm: "",
-    password_encryption: 0,
     ...overrides,
   };
 }
@@ -23,8 +21,6 @@ function bcryptUser(plaintext: string, overrides: Partial<MybbPasswordFields> = 
   return {
     password: bcrypt.hashSync(plaintext, 4),
     salt: "",
-    password_algorithm: "bcrypt",
-    password_encryption: 0,
     ...overrides,
   };
 }
@@ -35,10 +31,9 @@ test("accepts a valid legacy MyBB salted MD5 password", () => {
   assert.equal(checkMybbPassword(user, "wrong password").valid, false);
 });
 
-test("legacy hashes compare case-insensitively and accept the 'mybb' algorithm name", () => {
+test("legacy hashes compare case-insensitively", () => {
   const user = legacyUser("correct horse");
   assert.equal(checkMybbPassword({ ...user, password: user.password!.toUpperCase() }, "correct horse").valid, true);
-  assert.equal(checkMybbPassword({ ...user, password_algorithm: "MyBB" }, "correct horse").valid, true);
 });
 
 test("accepts a valid bcrypt password", () => {
@@ -48,22 +43,18 @@ test("accepts a valid bcrypt password", () => {
 });
 
 test("detects bcrypt by hash prefix, including PHP's $2y$", () => {
-  const user = bcryptUser("correct horse", { password_algorithm: "" });
+  const user = bcryptUser("correct horse");
   const phpHash = user.password!.replace(/^\$2[ab]\$/, "$2y$");
   assert.equal(checkMybbPassword({ ...user, password: phpHash }, "correct horse").valid, true);
 });
 
-test("rejects encrypted and unknown password formats", () => {
-  assert.deepEqual(checkMybbPassword(legacyUser("correct horse", { password_encryption: 1 }), "correct horse"), {
+test("rejects unknown hash formats", () => {
+  const argon = { password: "$argon2id$v=19$m=65536,t=4,p=1$c2FsdA$aGFzaA", salt: "" };
+  assert.deepEqual(checkMybbPassword(argon, "x"), { valid: false, unsupported: "hash format argon2id" });
+  assert.deepEqual(checkMybbPassword({ password: "not-a-known-hash", salt: "" }, "x"), {
     valid: false,
-    unsupported: "password_encryption=1",
+    unsupported: "hash format unknown",
   });
-  assert.deepEqual(checkMybbPassword(legacyUser("correct horse", { password_algorithm: "unknown" }), "correct horse"), {
-    valid: false,
-    unsupported: "password_algorithm=unknown",
-  });
-  const argon = { password: "$argon2id$v=19$m=65536,t=4,p=1$c2FsdA$aGFzaA", salt: "", password_algorithm: "argon2", password_encryption: 0 };
-  assert.equal(checkMybbPassword(argon, "x").valid, false);
 });
 
 test("rejects the $2x$ bcrypt variant and malformed bcrypt hashes", () => {
